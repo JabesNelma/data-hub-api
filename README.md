@@ -11,6 +11,12 @@ A production-ready, open-source REST API that can store and serve ANY type of da
 
 🌐 **Live Demo:** [https://data-hub-api.vercel.app](https://data-hub-api.vercel.app)
 
+> ⚠️ **PENTING / IMPORTANT:**
+> Live demo di Vercel hanya menampilkan **halaman dokumentasi frontend** saja.
+> **API endpoint (CRUD, Auth, dll) TIDAK bisa digunakan di Vercel** karena project ini menggunakan **SQLite** (file-based database) yang tidak kompatibel dengan Vercel serverless (read-only filesystem).
+>
+> **Untuk testing API secara penuh, silakan clone repository dan jalankan secara lokal.** Lihat bagian [Getting Started](#-getting-started) dan [Local Testing Guide](#-local-testing-guide).
+
 ---
 
 ## 📖 Overview
@@ -128,12 +134,12 @@ Flexible data entries with JSON content
 ### Authentication
 
 #### `POST /api/auth/login`
-Authenticate with email and password.
+Authenticate with username and password.
 
 **Request Body:**
 ```json
 {
-  "email": "admin@example.com",
+  "username": "JabesNelma",
   "password": "your-password"
 }
 ```
@@ -145,7 +151,7 @@ Authenticate with email and password.
   "data": {
     "user": {
       "id": "user-id",
-      "email": "admin@example.com",
+      "username": "JabesNelma",
       "role": "admin"
     },
     "accessToken": "jwt-access-token",
@@ -385,7 +391,7 @@ Create initial admin user and default data.
 **Request Body:**
 ```json
 {
-  "email": "admin@example.com",
+  "username": "JabesNelma",
   "password": "secure-password",
   "seedKey": "admin-setup-key"
 }
@@ -396,7 +402,7 @@ Create initial admin user and default data.
 {
   "success": true,
   "data": {
-    "user": { "id": "...", "email": "...", "role": "admin" },
+    "user": { "id": "...", "username": "JabesNelma", "role": "admin" },
     "categories": [...],
     "types": [...]
   },
@@ -452,7 +458,7 @@ Create initial admin user and default data.
    curl -X POST http://localhost:3000/api/admin/seed \
      -H "Content-Type: application/json" \
      -d '{
-       "email": "admin@example.com",
+       "username": "JabesNelma",
        "password": "your-secure-password",
        "seedKey": "admin-setup-key"
      }'
@@ -477,7 +483,7 @@ Create initial admin user and default data.
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@example.com",
+    "username": "JabesNelma",
     "password": "your-password"
   }'
 ```
@@ -685,6 +691,131 @@ bun run type-check
 
 ---
 
+## 🧪 Local Testing Guide
+
+> **Kenapa harus lokal?** Project ini menggunakan SQLite (file-based database). Vercel menggunakan serverless functions dengan filesystem read-only, sehingga database tidak bisa dibuat/ditulis. Untuk testing API, **wajib jalankan di lokal**.
+
+### Step 1: Clone & Setup
+
+```bash
+git clone https://github.com/JabesNelma/data-hub-api.git
+cd data-hub-api
+npm install
+cp .env.example .env
+npm run db:push
+npm run dev
+```
+
+### Step 2: Seed Admin User
+
+```bash
+curl -s -X POST http://localhost:3000/api/admin/seed \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "JabesNelma",
+    "password": "SecurePassword123!",
+    "seedKey": "admin-setup-key"
+  }'
+```
+
+### Step 3: Login & Dapatkan Token
+
+```bash
+curl -s -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "JabesNelma",
+    "password": "SecurePassword123!"
+  }'
+```
+
+Simpan `accessToken` dari response untuk digunakan di request selanjutnya.
+
+### Step 4: Test Semua Endpoint
+
+```bash
+# GET categories (public)
+curl -s http://localhost:3000/api/categories
+
+# GET types (public)
+curl -s http://localhost:3000/api/types
+
+# GET all data (public)
+curl -s http://localhost:3000/api/data
+
+# POST create data (admin only)
+curl -s -X POST http://localhost:3000/api/data \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "categoryId": "CATEGORY_ID",
+    "typeId": "TYPE_ID",
+    "title": "Data Penduduk Jakarta",
+    "content": {
+      "provinsi": "DKI Jakarta",
+      "populasi": 10500000,
+      "tahun": 2026
+    },
+    "source": "BPS Indonesia"
+  }'
+
+# GET data by ID (public)
+curl -s http://localhost:3000/api/data/DATA_ID
+
+# PUT update data (admin only)
+curl -s -X PUT http://localhost:3000/api/data/DATA_ID \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "title": "Updated Title",
+    "content": { "key": "updated-value" }
+  }'
+
+# DELETE data (admin only)
+curl -s -X DELETE http://localhost:3000/api/data/DATA_ID \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+# Refresh token
+curl -s -X POST http://localhost:3000/api/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{ "refreshToken": "YOUR_REFRESH_TOKEN" }'
+
+# Logout
+curl -s -X POST http://localhost:3000/api/auth/logout \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+### ✅ Hasil Testing Lokal (Verified)
+
+Semua endpoint telah diuji dan berjalan dengan baik secara lokal:
+
+| # | Endpoint | Method | Status | Keterangan |
+|---|----------|--------|--------|------------|
+| 1 | `/api/admin/seed` | POST | ✅ Pass | Admin user + categories + types berhasil dibuat |
+| 2 | `/api/auth/login` | POST | ✅ Pass | JWT access token & refresh token didapat |
+| 3 | `/api/categories` | GET | ✅ Pass | 3 categories: General, Documentation, API |
+| 4 | `/api/types` | GET | ✅ Pass | 3 types: JSON, Text, Structured |
+| 5 | `/api/data` | GET | ✅ Pass | List semua data entries |
+| 6 | `/api/data` | POST | ✅ Pass | Data entry baru berhasil dibuat |
+| 7 | `/api/data/:id` | GET | ✅ Pass | Get data by ID berhasil |
+| 8 | `/api/data/:id` | PUT | ✅ Pass | Data berhasil diupdate |
+| 9 | `/api/data/:id` | DELETE | ✅ Pass | Data berhasil dihapus |
+| 10 | `/api/auth/refresh` | POST | ✅ Pass | Access token baru didapat |
+| 11 | `/api/auth/logout` | POST | ✅ Pass | Logout berhasil |
+
+### ⚠️ Catatan Penting tentang Deployment
+
+| Platform | Frontend Docs | API (SQLite) | Keterangan |
+|----------|:---:|:---:|---|
+| **Localhost** | ✅ | ✅ | Full functionality — recommended untuk testing |
+| **Vercel** | ✅ | ❌ | Hanya frontend docs, API error karena SQLite read-only |
+| **Railway** | ✅ | ✅ | Support persistent disk — bisa pakai SQLite |
+| **VPS / Docker** | ✅ | ✅ | Full control — recommended untuk production |
+
+> **Tips:** Jika ingin deploy API ke production, pertimbangkan migrasi database ke **PostgreSQL** atau **MySQL** dan deploy ke platform yang support persistent storage seperti Railway, Render, atau VPS sendiri.
+
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -726,10 +857,16 @@ For issues, questions, or contributions:
 
 ---
 
+<div align="center">
+
 ## Data Hub API - Generic Open Data Backend
 
-🌐 **Live Demo:** [https://data-hub-api.vercel.app](https://data-hub-api.vercel.app)
+🌐 **Live Demo (Frontend Only):** [https://data-hub-api.vercel.app](https://data-hub-api.vercel.app)
 
-Created by Jabes Nelma
+📦 **Repository:** [https://github.com/JabesNelma/data-hub-api](https://github.com/JabesNelma/data-hub-api)
+
+Created by **Jabes Nelma**
 
 Junior Full Stack Developer • MIT License • Open Source
+
+</div>
