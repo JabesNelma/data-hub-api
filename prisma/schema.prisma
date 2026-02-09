@@ -1,0 +1,57 @@
+// Data Hub API - Generic Open Data Backend
+// Prisma Schema for SQLite Database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User model with JWT authentication support
+model User {
+  id             String    @id @default(cuid())
+  username       String    @unique
+  passwordHash   String
+  role           String    @default("user") // "admin" or "user"
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+// Category model for organizing data
+model Category {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  description String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  dataEntries DataEntry[]
+}
+
+// Data type model for classifying data
+model DataType {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  description String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  dataEntries DataEntry[]
+}
+
+// Data entry model with flexible JSON content
+model DataEntry {
+  id        String   @id @default(cuid())
+  categoryId String
+  typeId     String
+  title      String
+  content    String   // JSON string stored as TEXT (SQLite doesn't have JSONB)
+  source     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  type       DataType @relation(fields: [typeId], references: [id], onDelete: Cascade)
+}
