@@ -7,6 +7,9 @@ A production-ready, open-source REST API that can store and serve ANY type of da
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
+[![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://data-hub-api.vercel.app)
+
+🌐 **Live Demo:** [https://data-hub-api.vercel.app](https://data-hub-api.vercel.app)
 
 ---
 
@@ -724,6 +727,8 @@ For issues, questions, or contributions:
 ---
 
 ## Data Hub API - Generic Open Data Backend
+
+🌐 **Live Demo:** [https://data-hub-api.vercel.app](https://data-hub-api.vercel.app)
 
 Created by Jabes Nelma
 
